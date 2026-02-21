@@ -5,13 +5,15 @@ import OverlayLayer from "./components/OverlayLayer";
 import { useCamera } from "./hooks/useCamera";
 import { useYOLO } from "./hooks/useYOLO";
 import { useTracking } from "./hooks/useTracking";
+import { useEnrichment } from "./hooks/useEnrichment";
 import { useStore } from "./store/useStore";
 
 function App() {
   const { videoRef, stream, error, isReady } = useCamera();
-  const { detections, isModelLoaded, error: yoloError } = useYOLO(videoRef);
+  const { detections, isModelLoaded, error: yoloError, sampleCanvasRef } = useYOLO(videoRef);
   const trackedObjects = useTracking(detections);
   const setTrackedObjects = useStore((s) => s.setTrackedObjects);
+  const { connectionStatus } = useEnrichment(sampleCanvasRef);
 
   const [videoDims, setVideoDims] = useState({ width: 1280, height: 720 });
 
@@ -58,6 +60,24 @@ function App() {
           {yoloError}
         </div>
       )}
+
+      {/* WebSocket connection status indicator */}
+      <div className="absolute bottom-4 right-4 z-50 flex items-center gap-2">
+        {connectionStatus === "reconnecting" && (
+          <span className="text-yellow-400 text-xs font-mono">
+            Reconnecting...
+          </span>
+        )}
+        <div
+          className={`w-2 h-2 rounded-full ${
+            connectionStatus === "connected"
+              ? "bg-green-500"
+              : connectionStatus === "reconnecting"
+                ? "bg-yellow-500"
+                : "bg-red-500"
+          }`}
+        />
+      </div>
     </div>
   );
 }
