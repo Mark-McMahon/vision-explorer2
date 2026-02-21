@@ -7,9 +7,10 @@ import ExpandedCard from "./ExpandedCard";
 interface Props {
   obj: TrackedObject;
   top: number; // collision-adjusted Y position
+  opacity: number; // 1 = active, 0.5 = fading out (grace period)
 }
 
-function ObjectOverlay({ obj, top }: Props) {
+function ObjectOverlay({ obj, top, opacity }: Props) {
   const toggleExpanded = useStore((s) => s.toggleExpanded);
   const setEnrichmentState = useStore((s) => s.setEnrichmentState);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -44,8 +45,9 @@ function ObjectOverlay({ obj, top }: Props) {
         left: obj.smoothedX,
         top,
         width: obj.smoothedW,
+        opacity,
         transform: "translate3d(0, 0, 0)",
-        transition: "left 100ms linear, top 100ms linear",
+        transition: "left 100ms linear, top 100ms linear, opacity 300ms ease",
         zIndex: obj.isExpanded ? 100 : 30,
         pointerEvents: "auto",
       }}
@@ -72,4 +74,15 @@ function ObjectOverlay({ obj, top }: Props) {
   );
 }
 
-export default React.memo(ObjectOverlay);
+export default React.memo(ObjectOverlay, (prev, next) =>
+  prev.obj.trackId === next.obj.trackId &&
+  prev.obj.smoothedX === next.obj.smoothedX &&
+  prev.obj.smoothedY === next.obj.smoothedY &&
+  prev.obj.smoothedW === next.obj.smoothedW &&
+  prev.obj.smoothedH === next.obj.smoothedH &&
+  prev.obj.enrichmentState === next.obj.enrichmentState &&
+  prev.obj.isExpanded === next.obj.isExpanded &&
+  prev.obj.enrichmentData === next.obj.enrichmentData &&
+  prev.top === next.top &&
+  prev.opacity === next.opacity
+);

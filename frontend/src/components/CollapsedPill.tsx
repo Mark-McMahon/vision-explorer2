@@ -55,4 +55,9 @@ function CollapsedPill({ obj }: Props) {
   );
 }
 
-export default React.memo(CollapsedPill);
+export default React.memo(CollapsedPill, (prev, next) =>
+  prev.obj.trackId === next.obj.trackId &&
+  prev.obj.enrichmentState === next.obj.enrichmentState &&
+  prev.obj.label === next.obj.label &&
+  prev.obj.confidence === next.obj.confidence
+);

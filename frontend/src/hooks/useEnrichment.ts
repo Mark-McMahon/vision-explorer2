@@ -110,7 +110,7 @@ export function useEnrichment(
         ws.close();
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Enrichment gating — runs each time trackedObjects changes (10fps cadence)
   useEffect(() => {

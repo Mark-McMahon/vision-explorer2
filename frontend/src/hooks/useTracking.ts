@@ -19,6 +19,7 @@ function makeTrackedObject(det: Detection, now: number): TrackedObject {
     enrichmentState: "none",
     enrichmentData: null,
     isExpanded: false,
+    fadingOut: false,
   };
 }
 
@@ -42,9 +43,12 @@ export function useTracking(rawDetections: Detection[]): TrackedObject[] {
 
   // Stable callback ref so the grace-period timer can call it after expiry
   const scheduleUpdateRef = useRef<() => void>(() => {});
-  scheduleUpdateRef.current = () => {
-    setResult(capByConfidence(trackedRef.current));
-  };
+
+  useEffect(() => {
+    scheduleUpdateRef.current = () => {
+      setResult(capByConfidence(trackedRef.current));
+    };
+  });
 
   useEffect(() => {
     const tracked = trackedRef.current;
@@ -85,6 +89,7 @@ export function useTracking(rawDetections: Detection[]): TrackedObject[] {
           smoothedY: smoothed.y,
           smoothedW: smoothed.w,
           smoothedH: smoothed.h,
+          fadingOut: false,
         });
       } else {
         tracked.set(det.trackId, makeTrackedObject(det, now));
@@ -94,6 +99,10 @@ export function useTracking(rawDetections: Detection[]): TrackedObject[] {
     // Start grace-period timers for disappeared tracks
     for (const trackId of tracked.keys()) {
       if (!incomingIds.has(trackId) && !graceTimers.has(trackId)) {
+        // Mark as fading out immediately
+        const obj = tracked.get(trackId)!;
+        tracked.set(trackId, { ...obj, fadingOut: true });
+
         const t = setTimeout(() => {
           trackedRef.current.delete(trackId);
           graceTimersRef.current.delete(trackId);
@@ -108,8 +117,9 @@ export function useTracking(rawDetections: Detection[]): TrackedObject[] {
 
   // Clean up all grace timers on unmount
   useEffect(() => {
+    const graceTimers = graceTimersRef.current;
     return () => {
-      for (const t of graceTimersRef.current.values()) clearTimeout(t);
+      for (const t of graceTimers.values()) clearTimeout(t);
     };
   }, []);
 

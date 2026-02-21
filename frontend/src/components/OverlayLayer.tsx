@@ -6,6 +6,7 @@ import ObjectOverlay from "./ObjectOverlay";
 // Estimated pill dimensions for collision avoidance
 const PILL_HEIGHT = 36;
 const PILL_WIDTH = 160;
+const MAX_NUDGES = 3;
 
 function rectsOverlap(
   a: { x: number; y: number; w: number; h: number },
@@ -30,11 +31,14 @@ function computeLayout(
     let top = obj.smoothedY;
     const rect = { x: obj.smoothedX, y: top, w: PILL_WIDTH, h: PILL_HEIGHT };
 
-    // Nudge downward if overlapping a previously placed pill
+    // Nudge downward if overlapping a previously placed pill (max 3 nudges)
+    let nudges = 0;
     for (const p of placed) {
+      if (nudges >= MAX_NUDGES) break;
       if (rectsOverlap(rect, p)) {
         top = p.y + p.h + 8;
         rect.y = top;
+        nudges++;
       }
     }
 
@@ -63,7 +67,12 @@ function OverlayLayer() {
       }}
     >
       {layout.map(({ obj, top }) => (
-        <ObjectOverlay key={obj.trackId} obj={obj} top={top} />
+        <ObjectOverlay
+          key={obj.trackId}
+          obj={obj}
+          top={top}
+          opacity={obj.fadingOut ? 0.5 : 1}
+        />
       ))}
     </div>
   );

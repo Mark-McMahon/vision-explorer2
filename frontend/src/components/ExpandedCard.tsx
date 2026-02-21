@@ -220,4 +220,8 @@ function ExpandedCard({ obj }: Props) {
   );
 }
 
-export default React.memo(ExpandedCard);
+export default React.memo(ExpandedCard, (prev, next) =>
+  prev.obj.trackId === next.obj.trackId &&
+  prev.obj.enrichmentState === next.obj.enrichmentState &&
+  prev.obj.enrichmentData === next.obj.enrichmentData
+);

@@ -20,6 +20,7 @@ export interface TrackedObject extends Detection {
   enrichmentState: "none" | "pending" | "ready" | "error";
   enrichmentData: EnrichmentResponse | null;
   isExpanded: boolean;
+  fadingOut: boolean;
 }
 
 export interface EnrichmentResponse {
