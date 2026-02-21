@@ -44,7 +44,6 @@ function ObjectOverlay({ obj, top, opacity }: Props) {
         position: "absolute",
         left: obj.smoothedX,
         top,
-        width: obj.smoothedW,
         opacity,
         transform: "translate3d(0, 0, 0)",
         transition: "left 100ms linear, top 100ms linear, opacity 300ms ease",
@@ -63,8 +62,8 @@ function ObjectOverlay({ obj, top, opacity }: Props) {
       {/* Expand/collapse wrapper */}
       <div
         style={{
-          overflow: "hidden",
-          maxHeight: obj.isExpanded ? 600 : 40,
+          overflow: obj.isExpanded ? "hidden" : "visible",
+          maxHeight: obj.isExpanded ? 600 : undefined,
           transition: "max-height 300ms ease-out",
         }}
       >
@@ -78,7 +77,6 @@ export default React.memo(ObjectOverlay, (prev, next) =>
   prev.obj.trackId === next.obj.trackId &&
   prev.obj.smoothedX === next.obj.smoothedX &&
   prev.obj.smoothedY === next.obj.smoothedY &&
-  prev.obj.smoothedW === next.obj.smoothedW &&
   prev.obj.smoothedH === next.obj.smoothedH &&
   prev.obj.enrichmentState === next.obj.enrichmentState &&
   prev.obj.isExpanded === next.obj.isExpanded &&
