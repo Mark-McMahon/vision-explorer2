@@ -92,7 +92,9 @@ function ExpandedCard({ obj }: Props) {
         borderRadius: 16,
         minWidth: 280,
         maxWidth: 360,
-        overflow: "hidden",
+        maxHeight: 320,
+        overflowY: "auto",
+        overflowX: "hidden",
         color: "#fff",
         fontFamily: "monospace",
         fontSize: "0.8125rem",
@@ -159,10 +161,6 @@ function ExpandedCard({ obj }: Props) {
             padding: "10px 16px",
             borderBottom: "1px solid rgba(255,255,255,0.1)",
             color: "rgba(255,255,255,0.85)",
-            display: "-webkit-box",
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
           }}
         >
           {enrichment.summary}

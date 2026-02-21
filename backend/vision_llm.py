@@ -81,20 +81,14 @@ Describe what this person is doing, their context, and any notable objects they 
     "description": "One-sentence description of what they are doing and their immediate context"
   }},
   "enrichment": {{
-    "summary": "2-3 sentences describing the scene: what the person is doing, what objects or environment surround them, and any interesting context about the activity.",
+    "summary": "3-5 sentences describing the scene in detail: what the person is doing, their posture and activity, what objects or environment surround them, who or what they are interacting with, and any interesting context about the activity or setting.",
     "price_estimate": {{
       "range_low": "",
       "range_high": "",
       "currency": "USD",
       "note": ""
     }},
-    "specs": {{
-      "activity": "Primary activity (e.g. working, reading, talking, eating)",
-      "posture": "Standing, sitting, walking, etc.",
-      "setting": "Indoor/outdoor, type of environment",
-      "interacting_with": "Notable objects or people they are engaging with",
-      "mood": "General energy/mood of the scene (e.g. focused, relaxed, active)"
-    }},
+    "specs": {{}},
     "search_query": "Search query related to the person's primary activity or context"
   }}
 }}
