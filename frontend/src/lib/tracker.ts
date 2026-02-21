@@ -28,14 +28,41 @@ export class SimpleTracker {
 
     for (const det of detections) {
       let bestTrackId: number | null = null;
-      let bestIoU = 0;
+      let bestScore = 0;
 
       for (const [trackId, track] of this.activeTracks) {
         if (track.label !== det.label) continue;
-        const score = this.iou(det, track);
-        if (score > 0.5 && score > bestIoU) {
-          bestIoU = score;
+
+        const iouScore = this.iou(det, track);
+        if (iouScore > 0.5 && iouScore > bestScore) {
+          bestScore = iouScore;
           bestTrackId = trackId;
+          continue;
+        }
+
+        // Centroid-distance fallback for small/distant objects where IoU is
+        // unreliable.  If the box area is small (< 5000 px²) and the centroid
+        // hasn't moved more than 1.5× the box diagonal, treat it as the same
+        // track.  We convert to a 0-1 score so IoU matches always win.
+        const area = Math.min(det.w * det.h, track.w * track.h);
+        if (area < 5000) {
+          const cx1 = det.x + det.w / 2;
+          const cy1 = det.y + det.h / 2;
+          const cx2 = track.x + track.w / 2;
+          const cy2 = track.y + track.h / 2;
+          const dist = Math.hypot(cx1 - cx2, cy1 - cy2);
+          const diag = Math.hypot(
+            Math.max(det.w, track.w),
+            Math.max(det.h, track.h)
+          );
+          const maxDist = diag * 1.5;
+          if (dist < maxDist) {
+            const centroidScore = (1 - dist / maxDist) * 0.49; // always < IoU threshold
+            if (centroidScore > bestScore) {
+              bestScore = centroidScore;
+              bestTrackId = trackId;
+            }
+          }
         }
       }
 

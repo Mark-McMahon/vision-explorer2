@@ -1,11 +1,11 @@
 // lib/constants.ts
 
-export const YOLO_CONFIDENCE_THRESHOLD = 0.35;   // detection display threshold
-export const ENRICHMENT_CONFIDENCE_THRESHOLD = 0.85; // gate for LLM enrichment calls
+export const YOLO_CONFIDENCE_THRESHOLD = 0.5;    // detection display threshold
+export const ENRICHMENT_CONFIDENCE_THRESHOLD = 0.6;  // gate for LLM enrichment calls
 export const FRAME_SAMPLE_INTERVAL_MS = 100; // 10fps
-export const STABILITY_THRESHOLD_MS = 2000; // 2 seconds before enrichment
+export const STABILITY_THRESHOLD_MS = 500;  // 0.5 seconds before enrichment
 export const GRACE_PERIOD_MS = 1000; // 1 second before unmounting
-export const MAX_OVERLAYS = 8;
+export const MAX_OVERLAYS = 3;
 export const SMOOTHING_FACTOR = 0.7;
 export const WEBSOCKET_URL = "ws://localhost:8000/enrich";
 export const YOLO_MODEL_PATH = "/models/yolov8n.onnx";

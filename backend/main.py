@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
@@ -31,6 +33,26 @@ async def health_check():
 @app.websocket("/enrich")
 async def enrich(websocket: WebSocket):
     await websocket.accept()
+    tasks: set[asyncio.Task] = set()
+
+    async def process_request(request: EnrichmentRequest):
+        try:
+            result = await call_vision_llm(request.cropBase64, request.label)
+            response = EnrichmentResponse(
+                trackId=request.trackId,
+                **result,
+            )
+            await websocket.send_json(response.model_dump())
+        except (WebSocketDisconnect, RuntimeError):
+            # Client already gone — nothing to send
+            pass
+        except Exception as exc:
+            print(f"Error processing trackId {request.trackId}: {exc}")
+            try:
+                await websocket.send_json({"error": True, "trackId": request.trackId})
+            except (WebSocketDisconnect, RuntimeError):
+                pass
+
     try:
         while True:
             try:
@@ -40,16 +62,17 @@ async def enrich(websocket: WebSocket):
                 print(f"Invalid request: {exc}")
                 continue
 
-            try:
-                result = await call_vision_llm(request.cropBase64, request.label)
-                response = EnrichmentResponse(
-                    trackId=request.trackId,
-                    **result,
-                )
-                await websocket.send_json(response.model_dump())
-            except Exception as exc:
-                print(f"Error processing trackId {request.trackId}: {exc}")
-                await websocket.send_json({"error": True, "trackId": request.trackId})
+            # Fire off LLM call concurrently so the receive loop stays
+            # responsive to WebSocket pings/pongs
+            task = asyncio.create_task(process_request(request))
+            tasks.add(task)
+            task.add_done_callback(tasks.discard)
 
     except WebSocketDisconnect:
         print("Client disconnected")
+    finally:
+        # Cancel any in-flight LLM calls for this connection
+        for t in tasks:
+            t.cancel()
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)

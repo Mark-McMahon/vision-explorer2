@@ -1,4 +1,4 @@
-import { YOLO_CONFIDENCE_THRESHOLD, YOLO_INPUT_SIZE } from "./constants";
+import { YOLO_CONFIDENCE_THRESHOLD, YOLO_INPUT_SIZE, MAX_OVERLAYS } from "./constants";
 
 export const COCO_CLASSES: string[] = [
   "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train",
@@ -127,7 +127,9 @@ export function postprocessOutput(
     });
   }
 
-  return nms(candidates, 0.45);
+  // NMS then cap to MAX_OVERLAYS best detections early
+  const afterNms = nms(candidates, 0.45);
+  return afterNms.slice(0, MAX_OVERLAYS);
 }
 
 function iou(a: RawDetection, b: RawDetection): number {
@@ -150,9 +152,8 @@ function nms(detections: RawDetection[], iouThreshold: number): RawDetection[] {
   const kept: RawDetection[] = [];
 
   for (const det of sorted) {
-    const overlaps = kept.some(
-      (k) => k.label === det.label && iou(k, det) > iouThreshold
-    );
+    // Cross-class NMS: suppress any overlapping box regardless of label
+    const overlaps = kept.some((k) => iou(k, det) > iouThreshold);
     if (!overlaps) kept.push(det);
   }
 
