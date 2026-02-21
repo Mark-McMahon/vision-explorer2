@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseCameraResult {
   videoRef: React.RefObject<HTMLVideoElement>;
   stream: MediaStream | null;
   error: string | null;
   isReady: boolean;
+  retryCamera: () => void;
 }
 
 export function useCamera(): UseCameraResult {
@@ -12,6 +13,7 @@ export function useCamera(): UseCameraResult {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -60,7 +62,18 @@ export function useCamera(): UseCameraResult {
         mediaStream.getTracks().forEach((t) => t.stop());
       }
     };
-  }, []);
+  }, [attempt]);
 
-  return { videoRef, stream, error, isReady };
+  const retryCamera = useCallback(() => {
+    // Stop existing stream before retrying
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+    }
+    setStream(null);
+    setError(null);
+    setIsReady(false);
+    setAttempt((a) => a + 1);
+  }, [stream]);
+
+  return { videoRef, stream, error, isReady, retryCamera };
 }

@@ -11,6 +11,7 @@ interface Props {
 
 function ObjectOverlay({ obj, top }: Props) {
   const toggleExpanded = useStore((s) => s.toggleExpanded);
+  const setEnrichmentState = useStore((s) => s.setEnrichmentState);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Click-outside handler to collapse expanded card
@@ -48,7 +49,14 @@ function ObjectOverlay({ obj, top }: Props) {
         zIndex: obj.isExpanded ? 100 : 30,
         pointerEvents: "auto",
       }}
-      onClick={() => toggleExpanded(obj.trackId)}
+      onClick={() => {
+        // Clicking an error pill retries enrichment instead of expanding
+        if (obj.enrichmentState === "error") {
+          setEnrichmentState(obj.trackId, "none");
+          return;
+        }
+        toggleExpanded(obj.trackId);
+      }}
     >
       {/* Expand/collapse wrapper */}
       <div

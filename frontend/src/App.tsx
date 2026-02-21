@@ -9,8 +9,8 @@ import { useEnrichment } from "./hooks/useEnrichment";
 import { useStore } from "./store/useStore";
 
 function App() {
-  const { videoRef, stream, error, isReady } = useCamera();
-  const { detections, isModelLoaded, error: yoloError, sampleCanvasRef } = useYOLO(videoRef);
+  const { videoRef, stream, error, isReady, retryCamera } = useCamera();
+  const { detections, isModelLoaded, error: yoloError, sampleCanvasRef, retryModelLoad } = useYOLO(videoRef);
   const trackedObjects = useTracking(detections);
   const setTrackedObjects = useStore((s) => s.setTrackedObjects);
   const { connectionStatus } = useEnrichment(sampleCanvasRef);
@@ -40,7 +40,7 @@ function App() {
   return (
     <div className="w-screen h-screen bg-black overflow-hidden relative">
       {/* Layer 1: Camera feed */}
-      <CameraFeed videoRef={videoRef} stream={stream} error={error} isReady={isReady} />
+      <CameraFeed videoRef={videoRef} stream={stream} error={error} isReady={isReady} onRetry={retryCamera} />
 
       {/* Layer 2: Bounding box canvas */}
       {isModelLoaded && (
@@ -56,8 +56,14 @@ function App() {
 
       {/* YOLO model error banner */}
       {yoloError && (
-        <div className="absolute top-0 left-0 right-0 z-50 bg-red-900/80 text-white text-xs font-mono px-4 py-2 text-center">
-          {yoloError}
+        <div className="absolute top-0 left-0 right-0 z-50 bg-red-900/80 text-white text-xs font-mono px-4 py-2 text-center flex items-center justify-center gap-3">
+          <span>{yoloError}</span>
+          <button
+            onClick={retryModelLoad}
+            className="px-2 py-0.5 border border-white/40 rounded bg-white/10 hover:bg-white/20 transition-colors"
+          >
+            Retry
+          </button>
         </div>
       )}
 

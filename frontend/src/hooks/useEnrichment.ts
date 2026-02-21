@@ -61,8 +61,16 @@ export function useEnrichment(
       ws.onmessage = (event: MessageEvent) => {
         if (!isMountedRef.current) return;
         try {
-          const data: EnrichmentResponse = JSON.parse(event.data as string);
-          updateEnrichmentRef.current(data.trackId, data);
+          const data = JSON.parse(event.data as string);
+          // Backend sends { error: true, trackId } on Vision LLM failure
+          if (data.error && data.trackId != null) {
+            setEnrichmentStateRef.current(data.trackId, "error");
+            return;
+          }
+          updateEnrichmentRef.current(
+            (data as EnrichmentResponse).trackId,
+            data as EnrichmentResponse
+          );
         } catch (err) {
           console.error("Failed to parse enrichment response:", err);
         }

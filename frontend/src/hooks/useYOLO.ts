@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import * as ort from "onnxruntime-web";
 import type { Detection } from "../types/index";
@@ -16,6 +16,7 @@ export interface UseYOLOResult {
   isModelLoaded: boolean;
   error: string | null;
   sampleCanvasRef: RefObject<HTMLCanvasElement | null>;
+  retryModelLoad: () => void;
 }
 
 export function useYOLO(
@@ -24,6 +25,7 @@ export function useYOLO(
   const [detections, setDetections] = useState<Detection[]>([]);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [modelLoadAttempt, setModelLoadAttempt] = useState(0);
 
   const sessionRef = useRef<ort.InferenceSession | null>(null);
   const trackerRef = useRef(new SimpleTracker());
@@ -60,6 +62,7 @@ export function useYOLO(
         if (!cancelled) {
           sessionRef.current = session;
           setIsModelLoaded(true);
+          setError(null);
         }
       } catch (err) {
         if (!cancelled) {
@@ -77,7 +80,7 @@ export function useYOLO(
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [modelLoadAttempt]);
 
   // Inference loop — runs at FRAME_SAMPLE_INTERVAL_MS (100ms = 10fps)
   useEffect(() => {
@@ -183,5 +186,11 @@ export function useYOLO(
     };
   }, [isModelLoaded, videoRef]);
 
-  return { detections, isModelLoaded, error, sampleCanvasRef };
+  const retryModelLoad = useCallback(() => {
+    setError(null);
+    setIsModelLoaded(false);
+    setModelLoadAttempt((a) => a + 1);
+  }, []);
+
+  return { detections, isModelLoaded, error, sampleCanvasRef, retryModelLoad };
 }
