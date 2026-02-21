@@ -1,14 +1,24 @@
 import { useEffect, useState } from "react";
 import { CameraFeed } from "./components/CameraFeed";
 import { BoundingBoxCanvas } from "./components/BoundingBoxCanvas";
+import OverlayLayer from "./components/OverlayLayer";
 import { useCamera } from "./hooks/useCamera";
 import { useYOLO } from "./hooks/useYOLO";
+import { useTracking } from "./hooks/useTracking";
+import { useStore } from "./store/useStore";
 
 function App() {
   const { videoRef, stream, error, isReady } = useCamera();
   const { detections, isModelLoaded, error: yoloError } = useYOLO(videoRef);
+  const trackedObjects = useTracking(detections);
+  const setTrackedObjects = useStore((s) => s.setTrackedObjects);
 
   const [videoDims, setVideoDims] = useState({ width: 1280, height: 720 });
+
+  // Sync tracked objects into Zustand store each frame
+  useEffect(() => {
+    setTrackedObjects(trackedObjects);
+  }, [trackedObjects, setTrackedObjects]);
 
   // Capture video intrinsic dimensions when metadata loads
   useEffect(() => {
@@ -38,6 +48,9 @@ function App() {
           videoHeight={videoDims.height}
         />
       )}
+
+      {/* Layer 3: Overlay pills */}
+      <OverlayLayer />
 
       {/* YOLO model error banner */}
       {yoloError && (
