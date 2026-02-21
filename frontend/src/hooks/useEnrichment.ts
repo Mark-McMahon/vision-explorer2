@@ -134,9 +134,15 @@ export function useEnrichment(
       // Mark pending immediately to prevent double-send
       setEnrichmentStateRef.current(obj.trackId, "pending");
 
-      // Crop bounding box from the sample canvas (already has current frame)
-      const cropW = Math.max(1, Math.round(obj.w));
-      const cropH = Math.max(1, Math.round(obj.h));
+      // Crop bounding box from the sample canvas with 20% padding for context
+      const padX = obj.w * 0.2;
+      const padY = obj.h * 0.2;
+      const srcX = Math.max(0, Math.round(obj.x - padX));
+      const srcY = Math.max(0, Math.round(obj.y - padY));
+      const srcRight = Math.min(sampleCanvas.width, Math.round(obj.x + obj.w + padX));
+      const srcBottom = Math.min(sampleCanvas.height, Math.round(obj.y + obj.h + padY));
+      const cropW = Math.max(1, srcRight - srcX);
+      const cropH = Math.max(1, srcBottom - srcY);
       const cropCanvas = document.createElement("canvas");
       cropCanvas.width = cropW;
       cropCanvas.height = cropH;
@@ -145,10 +151,10 @@ export function useEnrichment(
 
       cropCtx.drawImage(
         sampleCanvas,
-        obj.x,
-        obj.y,
-        obj.w,
-        obj.h,
+        srcX,
+        srcY,
+        cropW,
+        cropH,
         0,
         0,
         cropW,

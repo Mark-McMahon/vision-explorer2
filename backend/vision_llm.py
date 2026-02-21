@@ -27,7 +27,7 @@ FALLBACK_RESPONSE = lambda yolo_label: {
     },
 }
 
-PROMPT = """YOLO detected this as: "{label}".
+PRODUCT_PROMPT = """YOLO detected this as: "{label}".
 
 Identify the specific item in this image and provide enrichment data. Return ONLY a JSON object with this exact structure:
 
@@ -67,6 +67,49 @@ If you cannot identify the specific product, provide your best guess based on wh
 
 Return raw JSON only, no markdown fences."""
 
+PERSON_PROMPT = """YOLO detected a person in this image.
+
+Describe what this person is doing, their context, and any notable objects they are interacting with. Focus on ACTIVITY and CONTEXT, not clothing details. Return ONLY a JSON object with this exact structure:
+
+{{
+  "identification": {{
+    "name": "Brief description of the person (e.g. 'Person reading a book', 'Person on a phone call')",
+    "brand": null,
+    "model": null,
+    "color": "Dominant color of their appearance",
+    "category": "person",
+    "description": "One-sentence description of what they are doing and their immediate context"
+  }},
+  "enrichment": {{
+    "summary": "2-3 sentences describing the scene: what the person is doing, what objects or environment surround them, and any interesting context about the activity.",
+    "price_estimate": {{
+      "range_low": "",
+      "range_high": "",
+      "currency": "USD",
+      "note": ""
+    }},
+    "specs": {{
+      "activity": "Primary activity (e.g. working, reading, talking, eating)",
+      "posture": "Standing, sitting, walking, etc.",
+      "setting": "Indoor/outdoor, type of environment",
+      "interacting_with": "Notable objects or people they are engaging with",
+      "mood": "General energy/mood of the scene (e.g. focused, relaxed, active)"
+    }},
+    "search_query": "Search query related to the person's primary activity or context"
+  }}
+}}
+
+Return raw JSON only, no markdown fences."""
+
+# Labels that should use the person-aware prompt
+PERSON_LABELS = frozenset(["person"])
+
+
+def _get_prompt(yolo_label: str) -> str:
+    if yolo_label in PERSON_LABELS:
+        return PERSON_PROMPT
+    return PRODUCT_PROMPT.format(label=yolo_label)
+
 
 def _strip_fences(text: str) -> str:
     """Strip markdown code fences if present."""
@@ -94,7 +137,7 @@ async def _call_once(crop_base64: str, yolo_label: str) -> dict:
                     },
                     {
                         "type": "text",
-                        "text": PROMPT.format(label=yolo_label),
+                        "text": _get_prompt(yolo_label),
                     },
                 ],
             }
